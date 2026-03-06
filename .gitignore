@@ -1,0 +1,32 @@
+# Go
+bin/
+dist/
+coverage.out
+*.test
+*.exe
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp/tmp
+.tmp/
+tmp/
+*.log
+*.pid
+*.zip
+*.csv
+*.jsonl
+*.sqlite
+
+# Build
+vendor/
