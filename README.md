@@ -1,103 +1,153 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Radar do Povo" width="100%">
+</p>
+
 # Radar do Povo
 
-**Radar do Povo** é um monorepo open source para distribuição, organização e acessibilidade de dados públicos do governo do Brasil.
+Repositorio open source para ingestao de dados publicos do Brasil em bancos externos.
 
-O repositório foi estruturado como se todas as APIs/ETLs de ingestão dos datasets públicos já fizessem parte da mesma plataforma, compartilhando a mesma filosofia operacional:
+O objetivo deste monorepo e servir como repositorio mae de ETLs em Go, organizados por fonte publica, para que qualquer pessoa ou time possa:
 
-- **Go em produção** para APIs e pipelines de ingestão
-- **PostgreSQL** como banco-alvo para quem deseja injetar os dados em banco próprio
-- **ETLs idempotentes e retomáveis**
-- **Padrão único de observabilidade, importação e versionamento**
-- **Monorepo orientado por datasets**, com cada pasta representando uma ingestão/API específica
+- executar as APIs de ingestao ja prontas;
+- carregar os dados em seu proprio PostgreSQL;
+- estudar o padrao usado nas APIs existentes;
+- criar novas ingestoes seguindo a mesma arquitetura.
 
-## Objetivo
+## O que existe hoje
 
-Padronizar a ingestão de datasets públicos brasileiros em uma arquitetura consistente, auditável e fácil de evoluir, permitindo que qualquer pessoa ou organização:
+Atualmente o repositorio possui 4 APIs de ingestao prontas em [`apis/`](apis/):
 
-- baixe dados oficiais de fontes públicas;
-- normalize e valide arquivos CSV/ZIP/JSON/XML;
-- injete em PostgreSQL com segurança;
-- exponha APIs próprias a partir da base carregada;
-- mantenha rastreabilidade, retomada e controle de imports.
+| API | Fonte publica | Granularidade | README local |
+| --- | --- | --- | --- |
+| `bolsa-familia` | Portal da Transparencia | mensal | [apis/bolsa-familia/README.md](apis/bolsa-familia/README.md) |
+| `cartão-de-pagamento` | Portal da Transparencia / CPGF | mensal | [apis/cartão-de-pagamento/README.md](apis/cartão-de-pagamento/README.md) |
+| `emendas-unico` | Portal da Transparencia / Emendas UNICO | carga unica | [apis/emendas-unico/README.md](apis/emendas-unico/README.md) |
+| `viagens-a-servico` | Portal da Transparencia | anual | [apis/viagens-a-servico/README.md](apis/viagens-a-servico/README.md) |
 
-## Filosofia do repositório
+Cada modulo e independente. Isso permite que um usuario use apenas a ingestao que precisa, com banco proprio, sem depender das demais.
 
-Cada dataset possui uma estrutura semelhante de projeto, inspirada em pipelines como:
+## Como o monorepo foi organizado
 
-- download oficial do dataset;
-- validação do artefato;
-- extração e parsing em stream;
-- normalização de headers e campos;
-- persistência em PostgreSQL;
-- controle de progresso em tabela `imports`;
-- proteção contra duplicação com chaves sintéticas e `ON CONFLICT DO NOTHING`;
-- logs estruturados e métricas de throughput.
+As APIs atuais seguem um padrao tecnico bem claro:
 
-Ou seja: o repositório é organizado **como uma coleção de APIs/ETLs de ingestão com arquitetura parecida entre si**.
+- `cmd/importer` como ponto de entrada;
+- `internal/config` para flags e variaveis de ambiente;
+- `internal/httpx` para download e HTTP resiliente;
+- `internal/etl` para orquestracao de etapas;
+- `internal/db` para conexao, migrations, controle de imports e carga em lote;
+- `internal/csvx`, `internal/zipx` e `internal/parse` para leitura, extracao e parsing;
+- `internal/logger` para logs estruturados;
+- `data/` e `certs/` para artefatos locais;
+- README local por API explicando fonte, tabelas, comandos e parametros.
 
-## Estrutura
+Esse padrao nao foi criado apenas para "organizar pastas". Ele existe para garantir:
 
-```text
-radardopovo/
-├── .github/
-├── apis/
-│   ├── emendas-unico/
-│   ├── viagens-a-servico/
-│   ├── bolsa-familia-pagamentos/
-│   ├── auxilio-brasil/
-│   ├── cpgf/
-│   ├── convenios-federais/
-│   ├── servidores-civis/
-│   ├── pep/
-│   ├── ceis-cnep/
-│   └── siafi-despesas/
-├── docs/
-├── scripts/
-└── templates/
-```
+- idempotencia;
+- retomada apos falha;
+- rastreabilidade operacional;
+- isolamento entre datasets;
+- facilidade para adicionar novos conectores sem acoplamento entre modulos.
 
-## O que existe em cada pasta de dataset
+## Inicio rapido
 
-Cada pasta em `apis/` representa uma API/ETL de ingestão com a mesma base estrutural:
+1. Escolha uma API em [`apis/`](apis/).
+2. Leia o README local do modulo.
+3. Copie o `.env.example` da API para `.env`.
+4. Configure o PostgreSQL de destino.
+5. Execute o importador com `go run ./cmd/importer` ou `make run`, conforme o modulo.
 
-- `cmd/api/` para entrypoints
-- `internal/app/` para orquestração
-- `internal/config/` para configuração
-- `internal/domain/` para tipos e regras de negócio
-- `internal/infra/http/` para clientes HTTP e downloaders
-- `internal/infra/postgres/` para persistência e bulk ingest
-- `internal/infra/storage/` para arquivos temporários/extração
-- `internal/observability/` para logs, métricas e tracing futuros
-- `internal/pipeline/` para etapas do ETL
-- `tests/` para testes unitários e de integração
-- `configs/` para exemplos de configuração
-
-## Catálogo inicial de datasets no monorepo
-
-Ver [docs/CATALOG.md](docs/CATALOG.md).
-
-## Padrões principais
-
-- Banco-alvo: PostgreSQL
-- Linguagem base: Go
-- Imports com resumibilidade
-- Idempotência por chave de linha ou hash sintético
-- Dados oficiais sempre identificados pela fonte original
-- Sem dependência obrigatória de SaaS proprietário
-- Branding e documentação padronizados para open source
-
-## Status do projeto
-
-Este repositório representa a **base organizacional final** do Radar do Povo para múltiplos datasets públicos. As APIs compartilham um modelo estrutural comum e devem evoluir dataset a dataset, mantendo consistência arquitetural.
-
-## Como adicionar um novo dataset
+Exemplo com `viagens-a-servico`:
 
 ```bash
-bash scripts/bootstrap-dataset.sh novo-dataset
+cd apis/viagens-a-servico
+cp .env.example .env
+go run ./cmd/importer --from=2011
 ```
 
-Isso cria a pasta do dataset com a estrutura padrão do monorepo.
+## Criando uma nova API de ingestao
 
-## Licença
+Para criar um novo modulo no mesmo padrao das APIs prontas:
+
+```bash
+bash scripts/bootstrap-dataset.sh meu-dataset
+```
+
+O script cria a estrutura base do modulo em `apis/meu-dataset/` com:
+
+- `cmd/importer`
+- `internal/config`
+- `internal/csvx`
+- `internal/db`
+- `internal/etl`
+- `internal/httpx`
+- `internal/logger`
+- `internal/parse`
+- `internal/zipx`
+- `data/`
+- `certs/`
+- arquivos iniciais de README, Makefile, `.env.example`, `go.mod` e `LICENSE` quando existir na raiz
+
+Antes de implementar um novo dataset, leia:
+
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/ADDING_NEW_API.md](docs/ADDING_NEW_API.md)
+- [docs/CATALOG.md](docs/CATALOG.md)
+- [docs/architecture/INGESTION_STANDARD.md](docs/architecture/INGESTION_STANDARD.md)
+- [docs/architecture/POSTGRES_PATTERN.md](docs/architecture/POSTGRES_PATTERN.md)
+
+## Estrutura do repositorio
+
+```text
+.
+|-- apis/
+|   |-- bolsa-familia/
+|   |-- cartão-de-pagamento/
+|   |-- emendas-unico/
+|   `-- viagens-a-servico/
+|-- docs/
+|   |-- architecture/
+|   `-- standards/
+|-- scripts/
+`-- templates/
+```
+
+## Filosofia do projeto
+
+- fonte oficial primeiro;
+- banco controlado pelo proprio usuario;
+- sem acoplamento entre datasets;
+- schema e regras perto da API correspondente;
+- documentacao local obrigatoria;
+- padrao repetivel para facilitar contribuicoes open source.
+
+## Documentacao
+
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/CATALOG.md](docs/CATALOG.md)
+- [docs/REPOSITORY_STRUCTURE.md](docs/REPOSITORY_STRUCTURE.md)
+- [docs/ADDING_NEW_API.md](docs/ADDING_NEW_API.md)
+- [docs/architecture/INGESTION_STANDARD.md](docs/architecture/INGESTION_STANDARD.md)
+- [docs/architecture/POSTGRES_PATTERN.md](docs/architecture/POSTGRES_PATTERN.md)
+- [docs/standards/DATA_POLICY.md](docs/standards/DATA_POLICY.md)
+- [docs/standards/NAMING.md](docs/standards/NAMING.md)
+- [docs/standards/OBSERVABILITY.md](docs/standards/OBSERVABILITY.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+- [SUPPORT.md](SUPPORT.md)
+
+## Contribuicoes
+
+Novas APIs sao bem-vindas, desde que sigam o padrao de ingestao e a documentacao do repositorio.
+
+Antes de abrir PR:
+
+- confira a estrutura do modulo;
+- documente a fonte oficial;
+- explique a estrategia de resume/idempotencia;
+- registre schema, tabelas e comandos de execucao;
+- atualize a documentacao do catalogo.
+
+## Licenca
 
 MIT. Veja [LICENSE](LICENSE).

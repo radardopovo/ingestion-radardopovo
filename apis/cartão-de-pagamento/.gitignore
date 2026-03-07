@@ -1,0 +1,7 @@
+# Radar do Povo ETL - https://radardopovo.com
+.env
+certs/*.pem
+data/zips/*.zip
+data/extracted/
+bin/
+logs/

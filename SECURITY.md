@@ -1,3 +1,12 @@
-# Segurança
+# Seguranca
 
-Se você identificar vulnerabilidades de segurança, problemas de exposição indevida de dados ou riscos de abuso operacional, abra uma issue privada com detalhes técnicos e impacto observado.
+Se voce identificar:
+
+- vulnerabilidades de seguranca;
+- risco de exposicao indevida de credenciais;
+- risco de abuso operacional;
+- falhas que possam comprometer dados importados;
+
+nao publique credenciais, certificados ou dumps sensiveis em issues abertas.
+
+Reporte o problema com detalhes tecnicos suficientes para reproduzir, impacto observado e modulo afetado.

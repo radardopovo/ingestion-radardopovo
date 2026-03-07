@@ -1,3 +1,3 @@
-module github.com/radardopovo/template
+module github.com/radardopovo/template-etl
 
-go 1.24
+go 1.23
