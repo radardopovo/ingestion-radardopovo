@@ -2,59 +2,91 @@
   <img src="assets/banner.png" alt="Radar do Povo" width="100%">
 </p>
 
-# Radar do Povo
+<p align="center">
+  Repositório open source para ingestão de dados públicos do Brasil em bancos externos.
+</p>
 
-Repositorio open source para ingestao de dados publicos do Brasil em bancos externos.
+<p align="center">
+  <a href="mailto:radardopovo@proton.me">radardopovo@proton.me</a>
+</p>
 
-O objetivo deste monorepo e servir como repositorio mae de ETLs em Go, organizados por fonte publica, para que qualquer pessoa ou time possa:
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/go-ingestion-00ADD8" alt="Go">
+  <img src="https://img.shields.io/badge/postgresql-supported-336791" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/open%20source-yes-brightgreen" alt="Open Source">
+  <img src="https://img.shields.io/badge/status-active-success" alt="Status">
+</p>
 
-- executar as APIs de ingestao ja prontas;
-- carregar os dados em seu proprio PostgreSQL;
-- estudar o padrao usado nas APIs existentes;
-- criar novas ingestoes seguindo a mesma arquitetura.
+---
+
+## Visão geral
+
+O **Radar do Povo** é um monorepo open source voltado à ingestão de dados públicos do Brasil em bancos externos, com foco em **ETLs em Go**, organização por dataset e execução independente por módulo.
+
+A proposta do repositório é servir como **repositório-mãe de APIs de ingestão**, permitindo que qualquer pessoa, time ou organização possa:
+
+- executar ingestões já prontas;
+- carregar os dados em PostgreSQL próprio;
+- estudar o padrão técnico adotado nas APIs existentes;
+- criar novos módulos seguindo a mesma arquitetura;
+- reaproveitar um modelo consistente de download, parsing, persistência e observabilidade.
 
 ## O que existe hoje
 
-Atualmente o repositorio possui 4 APIs de ingestao prontas em [`apis/`](apis/):
+Atualmente o repositório possui 4 APIs de ingestão prontas em [`apis/`](apis/):
 
-| API | Fonte publica | Granularidade | README local |
+| API | Fonte pública | Granularidade | README local |
 | --- | --- | --- | --- |
-| `bolsa-familia` | Portal da Transparencia | mensal | [apis/bolsa-familia/README.md](apis/bolsa-familia/README.md) |
-| `cartão-de-pagamento` | Portal da Transparencia / CPGF | mensal | [apis/cartão-de-pagamento/README.md](apis/cartão-de-pagamento/README.md) |
-| `emendas-unico` | Portal da Transparencia / Emendas UNICO | carga unica | [apis/emendas-unico/README.md](apis/emendas-unico/README.md) |
-| `viagens-a-servico` | Portal da Transparencia | anual | [apis/viagens-a-servico/README.md](apis/viagens-a-servico/README.md) |
+| `bolsa-familia` | Portal da Transparência | mensal | [apis/bolsa-familia/README.md](apis/bolsa-familia/README.md) |
+| `cartão-de-pagamento` | Portal da Transparência / CPGF | mensal | [apis/cartão-de-pagamento/README.md](apis/cartão-de-pagamento/README.md) |
+| `emendas-unico` | Portal da Transparência / Emendas UNICO | carga única | [apis/emendas-unico/README.md](apis/emendas-unico/README.md) |
+| `viagens-a-servico` | Portal da Transparência | anual | [apis/viagens-a-servico/README.md](apis/viagens-a-servico/README.md) |
 
-Cada modulo e independente. Isso permite que um usuario use apenas a ingestao que precisa, com banco proprio, sem depender das demais.
+Cada módulo é independente. Isso permite que o usuário utilize apenas a ingestão que precisa, com banco próprio, sem depender das demais APIs do monorepo.
+
+## Por que este projeto existe
+
+Bases públicas oficiais costumam vir com formatos diferentes, granularidades diferentes, problemas de padronização e fluxos de ingestão pouco reaproveitáveis.
+
+O Radar do Povo existe para oferecer uma base open source clara e repetível para:
+
+- baixar dados de fontes públicas oficiais;
+- validar artefatos como CSV, ZIP e arquivos relacionados;
+- normalizar campos, headers e estruturas de importação;
+- persistir dados em PostgreSQL de forma controlada;
+- manter rastreabilidade operacional e retomada após falha;
+- facilitar a criação de novas ingestões no mesmo padrão.
 
 ## Como o monorepo foi organizado
 
-As APIs atuais seguem um padrao tecnico bem claro:
+As APIs atuais seguem um padrão técnico comum:
 
 - `cmd/importer` como ponto de entrada;
-- `internal/config` para flags e variaveis de ambiente;
+- `internal/config` para flags e variáveis de ambiente;
 - `internal/httpx` para download e HTTP resiliente;
-- `internal/etl` para orquestracao de etapas;
-- `internal/db` para conexao, migrations, controle de imports e carga em lote;
-- `internal/csvx`, `internal/zipx` e `internal/parse` para leitura, extracao e parsing;
+- `internal/etl` para orquestração de etapas;
+- `internal/db` para conexão, migrations, controle de imports e carga em lote;
+- `internal/csvx`, `internal/zipx` e `internal/parse` para leitura, extração e parsing;
 - `internal/logger` para logs estruturados;
 - `data/` e `certs/` para artefatos locais;
-- README local por API explicando fonte, tabelas, comandos e parametros.
+- README local por API explicando fonte, tabelas, comandos e parâmetros.
 
-Esse padrao nao foi criado apenas para "organizar pastas". Ele existe para garantir:
+Esse padrão não existe apenas para organizar pastas. Ele foi pensado para garantir:
 
-- idempotencia;
-- retomada apos falha;
+- idempotência;
+- retomada após falha;
 - rastreabilidade operacional;
 - isolamento entre datasets;
-- facilidade para adicionar novos conectores sem acoplamento entre modulos.
+- facilidade para adicionar novos conectores sem acoplamento entre módulos.
 
-## Inicio rapido
+## Início rápido
 
 1. Escolha uma API em [`apis/`](apis/).
-2. Leia o README local do modulo.
+2. Leia o README local do módulo.
 3. Copie o `.env.example` da API para `.env`.
 4. Configure o PostgreSQL de destino.
-5. Execute o importador com `go run ./cmd/importer` ou `make run`, conforme o modulo.
+5. Execute o importador com `go run ./cmd/importer` ou `make run`, conforme o módulo.
 
 Exemplo com `viagens-a-servico`:
 
@@ -64,15 +96,15 @@ cp .env.example .env
 go run ./cmd/importer --from=2011
 ```
 
-## Criando uma nova API de ingestao
+## Criando uma nova API de ingestão
 
-Para criar um novo modulo no mesmo padrao das APIs prontas:
+Para criar um novo módulo no mesmo padrão das APIs prontas:
 
 ```bash
 bash scripts/bootstrap-dataset.sh meu-dataset
 ```
 
-O script cria a estrutura base do modulo em `apis/meu-dataset/` com:
+O script cria a estrutura base do módulo em `apis/meu-dataset/` com:
 
 - `cmd/importer`
 - `internal/config`
@@ -95,7 +127,7 @@ Antes de implementar um novo dataset, leia:
 - [docs/architecture/INGESTION_STANDARD.md](docs/architecture/INGESTION_STANDARD.md)
 - [docs/architecture/POSTGRES_PATTERN.md](docs/architecture/POSTGRES_PATTERN.md)
 
-## Estrutura do repositorio
+## Estrutura do repositório
 
 ```text
 .
@@ -114,13 +146,13 @@ Antes de implementar um novo dataset, leia:
 ## Filosofia do projeto
 
 - fonte oficial primeiro;
-- banco controlado pelo proprio usuario;
+- banco controlado pelo próprio usuário;
 - sem acoplamento entre datasets;
 - schema e regras perto da API correspondente;
-- documentacao local obrigatoria;
-- padrao repetivel para facilitar contribuicoes open source.
+- documentação local obrigatória;
+- padrão repetível para facilitar contribuições open source.
 
-## Documentacao
+## Documentação
 
 - [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 - [docs/CATALOG.md](docs/CATALOG.md)
@@ -136,18 +168,30 @@ Antes de implementar um novo dataset, leia:
 - [SECURITY.md](SECURITY.md)
 - [SUPPORT.md](SUPPORT.md)
 
-## Contribuicoes
+## Contribuições
 
-Novas APIs sao bem-vindas, desde que sigam o padrao de ingestao e a documentacao do repositorio.
+Novas APIs são bem-vindas, desde que sigam o padrão de ingestão e a documentação do repositório.
 
-Antes de abrir PR:
+Antes de abrir um PR:
 
-- confira a estrutura do modulo;
+- confira a estrutura do módulo;
 - documente a fonte oficial;
-- explique a estrategia de resume/idempotencia;
-- registre schema, tabelas e comandos de execucao;
-- atualize a documentacao do catalogo.
+- explique a estratégia de resume/idempotência;
+- registre schema, tabelas e comandos de execução;
+- atualize a documentação do catálogo.
 
-## Licenca
+Leia também:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+
+## Contato
+
+Para dúvidas gerais, sugestões, colaboração ou contato institucional:
+
+**radardopovo@proton.me**
+
+## Licença
 
 MIT. Veja [LICENSE](LICENSE).
